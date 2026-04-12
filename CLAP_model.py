@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import torchaudio
 from transformers import ClapModel, ClapProcessor
 import os
 import subprocess
@@ -8,6 +7,11 @@ import json
 from tqdm import tqdm
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# for running on compute cluster
+os.environ["PATH"] += (
+    os.pathsep + r"/home/ad.msoe.edu/whitcombp/MSOE/Senior_Design/ffmpeg"
+)
 
 
 def get_CLAP_model() -> tuple[ClapModel, ClapProcessor]:
@@ -94,7 +98,7 @@ def get_clap_embeddings_from_mp4(mp4_paths, model, processor):
 if __name__ == "__main__":
     model, processor = get_CLAP_model()
 
-    playlist_dir = r"C:\Users\whitcombp\Documents\Personal\Python\Actually Kinda Somewhat Decent Acceptable Songs_playlist"
+    playlist_dir = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/Actually Kinda Somewhat Decent Acceptable Songs_playlist"
     video_files = os.listdir(playlist_dir)
     video_files = [os.path.join(playlist_dir, v) for v in video_files]
 

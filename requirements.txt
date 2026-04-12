@@ -1,0 +1,7 @@
+torch
+numpy
+transformers
+tqdm
+scikit-learn
+hdbscan
+pytubefix

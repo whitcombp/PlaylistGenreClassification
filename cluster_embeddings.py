@@ -1,7 +1,7 @@
 import os
 import json  # for loading embeddings
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import cosine_similarity
 import hdbscan
 
@@ -10,13 +10,12 @@ def cluster_embeddings_to_dirs(
     embeddings,
     file_paths,
     output_dir="clusters",
-    min_cluster_size=2,
+    min_cluster_size=5,
     min_samples=1,
 ):
-
     assert len(embeddings) == len(file_paths)
 
-    X = np.array(embeddings)
+    X = normalize(np.array(embeddings))
 
     # cluster
     clusterer = hdbscan.HDBSCAN(
