@@ -1,27 +1,21 @@
 import os
+import shutil
 import json  # for loading embeddings
 import numpy as np
 from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import KMeans
 import hdbscan
 
 
 def cluster_embeddings_to_dirs(
     embeddings,
     file_paths,
+    clusterer,
     output_dir="clusters",
-    min_cluster_size=5,
-    min_samples=1,
 ):
     assert len(embeddings) == len(file_paths)
-
     X = normalize(np.array(embeddings))
-
-    # cluster
-    clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=min_cluster_size,
-        min_samples=min_samples,
-    )
     labels = clusterer.fit_predict(X)
 
     # group indices by cluster
@@ -44,7 +38,7 @@ def cluster_embeddings_to_dirs(
         for i, sim in zip(indices, sims):
             path = file_paths[i]
             filename = os.path.basename(path)
-            sim_name = f"{sim:.4f}_{filename}"
+            sim_name = f"{sim:.4f} -.- {filename}"
             dst = os.path.join(cluster_dir, sim_name)
 
             if not os.path.exists(dst):
@@ -60,5 +54,18 @@ if __name__ == "__main__":
     embeddings = data["embeddings"]
     file_paths = data["files"]
 
+    clusterer = hdbscan.HDBSCAN(
+        min_cluster_size=20,
+        min_samples=5,
+    )
+
+    clusterer = KMeans(n_clusters=30)
+
     output_path = "clusters"
-    labels = cluster_embeddings_to_dirs(embeddings, file_paths, output_dir=output_path)
+    shutil.rmtree(output_path)
+    labels = cluster_embeddings_to_dirs(
+        embeddings,
+        file_paths,
+        clusterer,
+        output_dir=output_path,
+    )

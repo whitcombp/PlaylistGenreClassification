@@ -14,9 +14,13 @@ os.environ["PATH"] += (
 )
 
 
-def get_CLAP_model() -> tuple[ClapModel, ClapProcessor]:
-    model = ClapModel.from_pretrained("laion/clap-htsat-unfused")
-    processor = ClapProcessor.from_pretrained("laion/clap-htsat-unfused")
+def get_CLAP_model(load_path=None) -> tuple[ClapModel, ClapProcessor]:
+    if load_path is not None:
+        model = ClapModel.from_pretrained(load_path)
+        processor = ClapProcessor.from_pretrained(load_path)
+    else:
+        model = ClapModel.from_pretrained("laion/clap-htsat-unfused")
+        processor = ClapProcessor.from_pretrained("laion/clap-htsat-unfused")
     model = model.to(device)
     return model, processor
 
@@ -26,11 +30,31 @@ def load_audio_ffmpeg(path, sr=48000):
     Extract mono audio from mp4 using ffmpeg (robust + cross-platform).
     """
 
-    cmd = ["ffmpeg", "-i", path, "-vn", "-ac", "1", "-ar", str(sr), "-f", "f32le", "-"]
+    cmd = [
+        "ffmpeg",
+        "-loglevel",
+        "error",
+        "-err_detect",
+        "ignore_err",
+        "-nostdin",
+        "-i",
+        path,
+        "-vn",
+        "-ac",
+        "1",
+        "-ar",
+        str(sr),
+        "-f",
+        "f32le",
+        "-",
+    ]
 
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
     audio = np.frombuffer(result.stdout, np.float32)
+
+    if audio is None or audio.size == 0:
+        raise ValueError(f"Empty audio in path: {path}")
     return audio, sr
 
 
@@ -96,7 +120,7 @@ def get_clap_embeddings_from_mp4(mp4_paths, model, processor):
 
 
 if __name__ == "__main__":
-    model, processor = get_CLAP_model()
+    model, processor = get_CLAP_model("training/finetuned_model")
 
     playlist_dir = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/Actually Kinda Somewhat Decent Acceptable Songs_playlist"
     video_files = os.listdir(playlist_dir)
