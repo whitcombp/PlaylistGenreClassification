@@ -120,7 +120,7 @@ def get_clap_embeddings_from_mp4(mp4_paths, model, processor):
 
 
 if __name__ == "__main__":
-    model, processor = get_CLAP_model("training/finetuned_model")
+    model, processor = get_CLAP_model("training/100_epochs/finetuned_model")
 
     playlist_dir = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/Actually Kinda Somewhat Decent Acceptable Songs_playlist"
     video_files = os.listdir(playlist_dir)

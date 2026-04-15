@@ -194,7 +194,7 @@ if __name__ == "__main__":
         train_numpy_files,
         model,
         processor,
-        num_epochs=10,
+        num_epochs=100,
         batch_size=32,
         is_already_audio=True,
     )
