@@ -48,7 +48,7 @@ class Playlist:
 
 def main():
     playlist = Playlist(
-        "https://www.youtube.com/playlist?list=PLwefRwBMRzc8gnjY4FTfEMwZZ7Jj_L26C"
+        "https://www.youtube.com/playlist?list=PLwefRwBMRzc9HxYarR0EltiVQxNcdxAyd"
     )
     print(len(playlist))
     print(playlist.index(0))

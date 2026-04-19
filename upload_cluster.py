@@ -3,7 +3,7 @@ from googleapiclient.discovery import build
 import os
 
 
-def upload_through_youtube_api(clusters: list):
+def upload_through_youtube_api(clusters: list, prefix="cluster"):
     SCOPES = ["https://www.googleapis.com/auth/youtube"]
 
     secret_path = r"PlaylistGenreClassification/client_secret_.json"
@@ -35,7 +35,8 @@ def upload_through_youtube_api(clusters: list):
         ).execute()
 
     for c in clusters:
-        playlist_id = create_playlist(c)
+        playlist_id = create_playlist(f"{prefix} - {c}")
+        song_files = os.listdir(os.path.join(clusters_dir, c))
         for s in song_files:
             # extract id file path
             id = s.split(" -.- ")[1]
@@ -55,13 +56,14 @@ def get_manual_playlist_link(song_ids: list):
         print(url)
 
 
+cluster_prefix = "all time favs playlist"
 clusters_dir = "clusters"
 clusters = os.listdir(clusters_dir)
 
 # clusters = [clusters[0]]  # for debugging
 
 # API method:
-# upload_through_youtube_api(clusters)
+upload_through_youtube_api(clusters, cluster_prefix)
 
 # manual method:
 for c in clusters:

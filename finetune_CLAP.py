@@ -174,13 +174,13 @@ def train(
 
 if __name__ == "__main__":
     model, processor = get_CLAP_model()
-    video_files_path = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/Actually Kinda Somewhat Decent Acceptable Songs_playlist"
+    video_files_path = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/all time favs_playlist"
     # We'll just use all the video files to fully fit the model on our data
     # this should give us the most accurate embeddings
     train_video_files = os.listdir(video_files_path)
     train_video_files = [os.path.join(video_files_path, f) for f in train_video_files]
     # perform ffmpeg operation before training
-    ffmpeg_dir = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/playlist_after_ffmpeg"
+    ffmpeg_dir = rf"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/{os.path.basename(video_files_path)}_after_ffmpeg"
     if not os.path.isdir(ffmpeg_dir):
         os.makedirs(ffmpeg_dir)
         for f in tqdm(train_video_files, desc="Precomputing FFMPEG audio array"):
@@ -194,7 +194,7 @@ if __name__ == "__main__":
         train_numpy_files,
         model,
         processor,
-        num_epochs=100,
+        num_epochs=10,
         batch_size=32,
         is_already_audio=True,
     )

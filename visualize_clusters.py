@@ -293,22 +293,22 @@ if __name__ == "__main__":
             "model": hdbscan.HDBSCAN(),
             "metric": lambda x, y: DBCV_score(x, y)[0],
             "parameters": {
-                "min_cluster_size": list(range(2, 25, 1)),
-                "min_samples": list(range(1, 20, 1)),
+                "min_cluster_size": list(range(2, 10, 1)),
+                "min_samples": list(range(1, 8, 1)),
             },
         },
         {
             "name": "KMeans",
             "model": KMeans(),
-            "metric": silhouette_score,
-            "parameters": {"n_clusters": list(range(2, 30, 2))},
+            "metric": lambda X, y: silhouette_score(X, y, metric="cosine"),
+            "parameters": {"n_clusters": list(range(2, 15, 2))},
         },
         {
             "name": "SpectralClustering",
             "model": SpectralClustering(assign_labels="kmeans"),
-            "metric": silhouette_score,
+            "metric": lambda X, y: silhouette_score(X, y, metric="cosine"),
             "parameters": {
-                "n_clusters": list(range(2, 30, 2)),
+                "n_clusters": list(range(2, 15, 2)),
                 "affinity": ["nearest_neighbors", "rbf"],
             },
         },
@@ -324,19 +324,17 @@ if __name__ == "__main__":
         {
             "name": "GaussianMixture",
             "model": GaussianMixture(),
-            "metric": silhouette_score,
+            "metric": lambda X, y: silhouette_score(X, y, metric="cosine"),
             "parameters": {
-                "n_components": list(range(2, 30, 2)),
-                "covariance_type": ["full", "tied", "diag"],
+                "n_components": list(range(2, 15, 2)),
             },
         },
         {
             "name": "Agglomerative",
             "model": AgglomerativeClustering(),
-            "metric": silhouette_score,
+            "metric": lambda X, y: silhouette_score(X, y, metric="cosine"),
             "parameters": {
-                "n_clusters": list(range(2, 30, 2)),
-                "linkage": ["ward", "complete", "average"],
+                "n_clusters": list(range(2, 15, 2)),
             },
         },
     ]

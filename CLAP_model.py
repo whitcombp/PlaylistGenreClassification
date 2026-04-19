@@ -1,3 +1,6 @@
+from sklearn.preprocessing import normalize
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.decomposition import PCA
 import torch
 import numpy as np
 from transformers import ClapModel, ClapProcessor
@@ -74,7 +77,7 @@ def chunk_audio(audio, sr, chunk_sec, hop_sec):
     return chunks
 
 
-def get_clap_embeddings_from_mp4(mp4_paths, model, processor):
+def get_clap_embeddings_from_mp4(mp4_paths, model: ClapModel, processor: ClapProcessor):
     """
     Returns CLAP embeddings for a list of mp4 files.
 
@@ -103,26 +106,52 @@ def get_clap_embeddings_from_mp4(mp4_paths, model, processor):
                 inputs = processor(audio=chunk, sampling_rate=sr, return_tensors="pt")
                 inputs = {k: v.to(device) for k, v in inputs.items()}
 
-                outputs = model.get_audio_features(**inputs)
-                # shape: (1, CLAP windows, 2, embedding size)
-                audio_features = outputs.last_hidden_state
-                # mean non-feature dims, (1, embedding size)
-                audio_features = audio_features.mean(dim=(1, 2))
-                # normalize
-                audio_features = torch.nn.functional.normalize(audio_features, dim=-1)
-                # append chunk and repeat
+                outputs = model.get_audio_features(**inputs).pooler_output
+                audio_features = torch.nn.functional.normalize(outputs, dim=-1)
                 chunk_embeds.append(audio_features.cpu().numpy()[0])
 
-            aggregated_embedding = np.median(chunk_embeds, axis=0)
-            embeddings.append(aggregated_embedding)
+            aggregated = np.mean(chunk_embeds, axis=0)
+            aggregated = aggregated / (np.linalg.norm(aggregated) + 1e-8)
+            embeddings.append(aggregated)
 
     return np.vstack(embeddings)
 
 
-if __name__ == "__main__":
-    model, processor = get_CLAP_model("training/100_epochs/finetuned_model")
+def diagnose_embeddings(embeddings):
+    # From Claude's advice, check for signs of collapsed or low-quality embeddings before clustering.
+    X = normalize(np.array(embeddings))
 
-    playlist_dir = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/Actually Kinda Somewhat Decent Acceptable Songs_playlist"
+    # 1. Check embedding variance — collapsed embeddings will have near-zero std
+    print(f"Mean std per dim (want > 0.05): {X.std(axis=0).mean():.4f}")
+    print(f"Dims near-zero std (<0.01): {(X.std(axis=0) < 0.01).sum()}")
+
+    # 2. Check pairwise similarity distribution
+    # If genre structure exists, you should see a bimodal distribution
+
+    sim_matrix = cosine_similarity(X)
+    upper = sim_matrix[np.triu_indices_from(sim_matrix, k=1)]
+    print(
+        f"Pairwise cosine sim — mean (want mean < 0.95, std > 0.05): {upper.mean():.3f}, std: {upper.std():.3f}"
+    )
+    # If mean is > 0.95, embeddings are collapsed
+    # If std is < 0.05, there's no cluster structure to find
+
+    # 3. PCA explained variance — how many dims carry signal?
+
+    pca = PCA(n_components=min(50, X.shape[1]))
+    pca.fit(X)
+    cumvar = np.cumsum(pca.explained_variance_ratio_)
+    n_dims_90 = np.searchsorted(cumvar, 0.90) + 1
+    print(
+        f"Dims needed for 90% variance (want > 5): {n_dims_90}"
+    )  # want > 5 for genre structure
+
+
+if __name__ == "__main__":
+    clap_model_path = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/training/all_time_favs/10_epochs/finetuned_model"
+    model, processor = get_CLAP_model(clap_model_path)
+
+    playlist_dir = r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/all time favs_playlist"
     video_files = os.listdir(playlist_dir)
     video_files = [os.path.join(playlist_dir, v) for v in video_files]
 
@@ -131,7 +160,7 @@ if __name__ == "__main__":
     )
     embeddings = embeddings.tolist()
     print("embedding len:", len(embeddings))
-    print("first embedding:\n", embeddings[0])
+    diagnose_embeddings(embeddings)
 
     with open("embeddings.json", "w") as fp:
         json.dump({"embeddings": embeddings, "files": video_files}, fp, indent=4)

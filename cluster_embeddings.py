@@ -48,18 +48,20 @@ def cluster_embeddings_to_dirs(
 
 
 if __name__ == "__main__":
-    json_path = "embeddings.json"
+    json_path = (
+        r"/home/ad.msoe.edu/whitcombp/MSOE/PlaylistGenreClassification/embeddings.json"
+    )
     with open(json_path, "r") as fp:
         data = json.load(fp)
     embeddings = data["embeddings"]
     file_paths = data["files"]
 
-    clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=20,
-        min_samples=5,
-    )
+    # clusterer = hdbscan.HDBSCAN(
+    #     min_cluster_size=20,
+    #     min_samples=5,
+    # )
 
-    clusterer = KMeans(n_clusters=30)
+    clusterer = KMeans(n_clusters=9)
 
     output_path = "clusters"
     shutil.rmtree(output_path)
